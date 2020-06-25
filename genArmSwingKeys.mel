@@ -1,0 +1,32 @@
+// Simple function to procedurally generate arm movements assuming an object has a
+// center, left arm, and right arm defined with appropriate associative IKHandles.
+proc genArmSwingKeys(string $center, int $interval, string $lArmName, string $rArmName, 
+                     int $numFrames, float $swingRadius, int $startFrame) {
+    // Get array of x,y,z coordinates for center's global position
+    float $cenPos[] = `xform -q -t -ws $center`;
+    // Set initial arm positions with leftarm forward and right arm backward
+    currentTime -edit $startFrame;
+    move 0 0 ($swingRadius + $cenPos[2]) $lArmName;
+    select $lArmName;
+    setKeyframe;
+    move 0 0 ((-1 * $swingRadius) + $cenPos[2]) $rArmName;
+    select $rArmName;
+    setKeyframe;
+    
+    for ($i = 1; (($i * $interval) + $startFrame) < $numFrames; ++$i) {
+      // Set current time
+      currentTime -edit (($i * $interval) + $startFrame);
+      $cenPos = `xform -q -t -ws $center`; 
+      // i increments in cycles of 4 such that when i % 4 == 0 or 1 the 
+      // translateZ value is positive, and when i % 4 == 2 or 3, the
+      // translateZ value is negative 
+      move 0 0 (($i % 2 ? (-1 * $swingRadius) : $swingRadius) + $cenPos[2]) $lArmName;
+      select $lArmName;
+      // Key arm movement
+      setKeyframe;
+      move 0 0 (($i % 2 ? $swingRadius : (-1 * $swingRadius)) + $cenPos[2]) $rArmName;
+      select $rArmName;
+      // Key arm movement
+      setKeyframe;
+    } 
+}
